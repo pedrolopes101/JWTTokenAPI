@@ -45,6 +45,10 @@ namespace APIWithJwt.Models
                     .IsRequired()
                     .HasMaxLength(100);
 
+                entity.Property(e => e.Role)
+              .IsRequired()
+             .HasMaxLength(50);
+
                 entity.Property(e => e.isActive);
             });
         }

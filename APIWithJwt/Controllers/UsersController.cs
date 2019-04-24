@@ -32,10 +32,21 @@ namespace APIWithJwt.Controllers
         }
 
         // GET: api/Users
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Users>>> GetUsers()
         {
+            var currentUserId = int.Parse(User.Identity.Name);
+            if (!User.IsInRole(Role.Admin))
+            {
+                return Forbid();
+            }
+            else
+            {
+
             return await _context.Users.ToListAsync();
+
+            }
         }
 
         //// GET: api/Users/5
@@ -83,17 +94,18 @@ namespace APIWithJwt.Controllers
         //}
 
         // POST: api/Users
-        [Authorize]
+        [Authorize(Roles = Role.Admin)]
         [Route("CreateUser")]
         [HttpPost]
-        public async Task<ActionResult<Users>> PostUsers(TokenRequest login)
+        public async Task<ActionResult<Users>> PostUsers(TokenRequest CreateUser)
         {
             string salt = _crypto.CreateSalt();
             Users user = new Users()
             {
                 Salt = salt,
-                Username = login.Username,
-                Password = _crypto.GenerateHash(login.Password, salt),
+                Username = CreateUser.Username,
+                Password = _crypto.GenerateHash(CreateUser.Password, salt),
+                Role = Role.User,
                 isActive = true
             };
 
@@ -135,7 +147,8 @@ namespace APIWithJwt.Controllers
             {
                 var claims = new[]
                 {
-            new Claim(ClaimTypes.Name, request.Username)
+            new Claim(ClaimTypes.Name, user.Id.ToString()),
+             new Claim(ClaimTypes.Role, user.Role)
         };
                 string o = _config["SecurityKey"];
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["SecurityKey"]));
