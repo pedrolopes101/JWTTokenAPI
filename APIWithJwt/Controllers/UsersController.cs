@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using APIWithJwt.Models;
@@ -13,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using APIWithJwt.Models.UserModels;
 
 namespace APIWithJwt.Controllers
 {
@@ -20,31 +20,31 @@ namespace APIWithJwt.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly UserDatabaseContext _context;
+  
         private readonly ICryptographyProcessor _crypto;
-        private readonly IConfiguration _config;
+        private readonly IUserService _userService;
 
-        public UsersController(UserDatabaseContext context, ICryptographyProcessor crypto, IConfiguration config)
+        public UsersController(ICryptographyProcessor crypto, IUserService userService)
         {
-            _context = context;
+      
             _crypto = crypto;
-            _config = config;
+            _userService = userService;
         }
 
         // GET: api/Users
         [Authorize]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Users>>> GetUsers()
+        public IActionResult GetUsers()
         {
             var currentUserId = int.Parse(User.Identity.Name);
             if (!User.IsInRole(Role.Admin))
             {
-                return Forbid();
+                return Unauthorized();
             }
             else
             {
-
-            return await _context.Users.ToListAsync();
+     
+                return Ok(_userService.GetUsers());
 
             }
         }
@@ -97,22 +97,13 @@ namespace APIWithJwt.Controllers
         [Authorize(Roles = Role.Admin)]
         [Route("CreateUser")]
         [HttpPost]
-        public async Task<ActionResult<Users>> PostUsers(TokenRequest CreateUser)
+        public  ActionResult<Users> CreateUser(TokenRequest User)
         {
-            string salt = _crypto.CreateSalt();
-            Users user = new Users()
-            {
-                Salt = salt,
-                Username = CreateUser.Username,
-                Password = _crypto.GenerateHash(CreateUser.Password, salt),
-                Role = Role.User,
-                isActive = true
-            };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            if(User.Username == null || User.Password == null)
+                return BadRequest("Please make sure both fields are filled in");
 
-            return CreatedAtAction("GetUsers", new { id = user.Id }, user);
+            return Ok(_userService.CreateUser(User));
         }
 
         //// DELETE: api/Users/5
@@ -140,34 +131,16 @@ namespace APIWithJwt.Controllers
         [HttpPost]
         public ActionResult RequestToken([FromBody] TokenRequest request)
         {
-          
-            Users user = _context.Users.Where(x => x.Username == request.Username).FirstOrDefault();
-            bool isActive = user.isActive ?? false;
-            if (_crypto.AreEqual(request.Password,user.Password,user.Salt) && isActive)
+          var token= _userService.Authenticate(request.Username, request.Password);
+            if (token == null)
             {
-                var claims = new[]
-                {
-            new Claim(ClaimTypes.Name, user.Id.ToString()),
-             new Claim(ClaimTypes.Role, user.Role)
-        };
-                string o = _config["SecurityKey"];
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["SecurityKey"]));
-                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                var token = new JwtSecurityToken(
-                    issuer: "yourdomain.com",
-                    audience: "yourdomain.com",
-                    claims: claims,
-                    expires: DateTime.Now.AddMinutes(30),
-                    signingCredentials: creds);
-
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token)
-                });
+                return BadRequest("Could not verify username and password");
             }
 
-            return BadRequest("Could not verify username and password");
+            return Ok(new
+            {
+                tokenString =  token
+            });
         }
     }
 }

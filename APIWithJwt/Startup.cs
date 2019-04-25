@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using APIWithJwt.Models;
 using APIWithJwt.Models.Hasher;
+using APIWithJwt.Models.UserModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -36,7 +37,7 @@ namespace APIWithJwt
             services.AddSingleton<ICryptographyProcessor, CryptographyProcessor>();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1" });
+                c.SwaggerDoc("v1", new Info { Title = "My API", Version = "v1", Description ="Jwt token authentication API made by pedrolopes101 on github"});
 
                 var security = new Dictionary<string, IEnumerable<string>>
                 {
@@ -51,7 +52,7 @@ namespace APIWithJwt
                 });
                 c.AddSecurityRequirement(security);
             });
-
+            services.AddScoped<IUserService, UserService>();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
        .AddJwtBearer(options =>
@@ -62,8 +63,8 @@ namespace APIWithJwt
                ValidateAudience = true,
                ValidateLifetime = true,
                ValidateIssuerSigningKey = true,
-               ValidIssuer = "yourdomain.com",
-               ValidAudience = "yourdomain.com",
+               ValidIssuer = "pfslopes.com",
+               ValidAudience = "pfslopes.com",
                IssuerSigningKey = new SymmetricSecurityKey(
                    Encoding.UTF8.GetBytes(Configuration["SecurityKey"]))
            };
@@ -83,6 +84,11 @@ namespace APIWithJwt
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+            app.UseCors(x => x
+        .AllowAnyOrigin()
+        .AllowAnyMethod()
+        .AllowAnyHeader());
+
             app.UseAuthentication();
             app.UseSwagger();
             app.UseHttpsRedirection();
