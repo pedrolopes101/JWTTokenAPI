@@ -10,6 +10,6 @@ namespace APIWithJwt.Models.UserModels
         String Authenticate(string username, string password);
         Task<IEnumerable<Users>> GetUsers();
         Users GetById(int id);
-        Users CreateUser(TokenRequest User);
+        Users CreateUser(LoginCredentials User);
     }
 }

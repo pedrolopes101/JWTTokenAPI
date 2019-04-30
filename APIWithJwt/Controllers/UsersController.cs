@@ -13,6 +13,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using APIWithJwt.Models.UserModels;
+using Microsoft.AspNetCore.Http;
+using APIWithJwt.Models.TokenModels;
 
 namespace APIWithJwt.Controllers
 {
@@ -20,19 +22,22 @@ namespace APIWithJwt.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-  
+
         private readonly ICryptographyProcessor _crypto;
         private readonly IUserService _userService;
 
         public UsersController(ICryptographyProcessor crypto, IUserService userService)
         {
-      
+
             _crypto = crypto;
             _userService = userService;
         }
 
         // GET: api/Users
         [Authorize]
+        [ProducesResponseType(typeof(Users), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpGet]
         public IActionResult GetUsers()
         {
@@ -43,7 +48,7 @@ namespace APIWithJwt.Controllers
             }
             else
             {
-     
+
                 return Ok(_userService.GetUsers());
 
             }
@@ -96,12 +101,15 @@ namespace APIWithJwt.Controllers
         // POST: api/Users
         [Authorize(Roles = Role.Admin)]
         [Route("CreateUser")]
+        [ProducesResponseType(typeof(Users), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [HttpPost]
-        public  ActionResult<Users> CreateUser(TokenRequest User)
+        public ActionResult<Users> CreateUser(LoginCredentials User)
         {
 
-            if(User.Username == null || User.Password == null)
-                return BadRequest("Please make sure both fields are filled in");
+            if (String.IsNullOrEmpty(User.Username) || User.Username.All(char.IsDigit) || String.IsNullOrEmpty(User.Password) || User.Password.All(char.IsDigit))
+                return BadRequest("Please make sure both fields are filled in correctly");
 
             return Ok(_userService.CreateUser(User));
         }
@@ -127,19 +135,28 @@ namespace APIWithJwt.Controllers
         //    return _context.Users.Any(e => e.Id == id);
         //}
 
+
         [Route("RequestToken")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         [HttpPost]
-        public ActionResult RequestToken([FromBody] TokenRequest request)
+        public ActionResult RequestToken([FromBody] LoginCredentials request)
         {
-          var token= _userService.Authenticate(request.Username, request.Password);
-            if (token == null)
+            if (String.IsNullOrEmpty(request.Username) || request.Username.All(char.IsDigit) || String.IsNullOrEmpty(request.Password) || request.Password.All(char.IsDigit))
+                return BadRequest("Sent value is not valid");
+            Token token = new Token()
+            {
+                token = _userService.Authenticate(request.Username, request.Password)
+            };
+
+            if (String.IsNullOrEmpty(token.token))
             {
                 return BadRequest("Could not verify username and password");
             }
 
             return Ok(new
             {
-                tokenString =  token
+                token = token.token
             });
         }
     }

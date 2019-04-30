@@ -66,7 +66,7 @@ namespace APIWithJwt.Models.UserModels
             throw new NotImplementedException();
         }
 
-        public  Users CreateUser(TokenRequest User)
+        public Users CreateUser(LoginCredentials User)
         {
             string salt = _crypto.CreateSalt();
             Users user = new Users()
