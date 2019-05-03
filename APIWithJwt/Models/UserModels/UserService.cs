@@ -68,6 +68,10 @@ namespace APIWithJwt.Models.UserModels
 
         public Users CreateUser(LoginCredentials User)
         {
+            var UserNameAlreadyInUse = _context.Users.Where(x => x.Username == User.Username);
+            if (UserNameAlreadyInUse == null) { 
+                return null;
+            }
             string salt = _crypto.CreateSalt();
             Users user = new Users()
             {

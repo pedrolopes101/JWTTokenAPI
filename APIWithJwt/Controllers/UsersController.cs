@@ -110,8 +110,13 @@ namespace APIWithJwt.Controllers
 
             if (String.IsNullOrEmpty(User.Username) || User.Username.All(char.IsDigit) || String.IsNullOrEmpty(User.Password) || User.Password.All(char.IsDigit))
                 return BadRequest("Please make sure both fields are filled in correctly");
+            var user = _userService.CreateUser(User);
+            if (user == null)
+            {
+                return BadRequest("This username is already in use");
 
-            return Ok(_userService.CreateUser(User));
+            }
+            return Ok(user);
         }
 
         //// DELETE: api/Users/5
