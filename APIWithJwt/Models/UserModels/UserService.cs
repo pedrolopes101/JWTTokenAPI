@@ -27,7 +27,7 @@ namespace APIWithJwt.Models.UserModels
         public String Authenticate(string username, string password)
         {
             Users user = _context.Users.Where(x => x.Username == username).FirstOrDefault();
-            bool isActive = user.isActive ?? false;
+            bool isActive = user.IsActive ?? false;
             if (_crypto.AreEqual(password, user.Password, user.Salt) && isActive)
             {
                 var claims = new[]
@@ -79,7 +79,8 @@ namespace APIWithJwt.Models.UserModels
                 Username = User.Username,
                 Password = _crypto.GenerateHash(User.Password, salt),
                 Role = Role.User,
-                isActive = true
+                IsActive = true,
+         
             };
 
             _context.Users.Add(user);

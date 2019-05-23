@@ -7,14 +7,15 @@ namespace APIWithJwt.Models
 {
     public partial class UserDatabaseContext : DbContext
     {
-        public readonly IConfiguration _config;
+        private readonly IConfiguration _config;
         public UserDatabaseContext()
         {
         }
 
-        public UserDatabaseContext(DbContextOptions<UserDatabaseContext> options, IConfiguration configuration) : base(options)
+        public UserDatabaseContext(DbContextOptions<UserDatabaseContext> options, IConfiguration config)
+            : base(options)
         {
-            _config = configuration;
+            _config = config;
         }
 
         public virtual DbSet<Users> Users { get; set; }
@@ -23,6 +24,7 @@ namespace APIWithJwt.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
                 optionsBuilder.UseSqlServer(_config["DbString"]);
             }
         }
@@ -33,9 +35,15 @@ namespace APIWithJwt.Models
 
             modelBuilder.Entity<Users>(entity =>
             {
+                entity.Property(e => e.IsActive).HasColumnName("isActive");
+
                 entity.Property(e => e.Password)
                     .IsRequired()
                     .HasMaxLength(60);
+
+                entity.Property(e => e.Role)
+                    .IsRequired()
+                    .HasMaxLength(50);
 
                 entity.Property(e => e.Salt)
                     .IsRequired()
@@ -44,12 +52,6 @@ namespace APIWithJwt.Models
                 entity.Property(e => e.Username)
                     .IsRequired()
                     .HasMaxLength(100);
-
-                entity.Property(e => e.Role)
-              .IsRequired()
-             .HasMaxLength(50);
-
-                entity.Property(e => e.isActive);
             });
         }
     }

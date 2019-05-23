@@ -8,7 +8,7 @@ namespace APIWithJwt.Models
         public int Id { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public bool? isActive { get; set; }
+        public bool? IsActive { get; set; }
         public string Salt { get; set; }
         public string Role { get; set; }
     }
