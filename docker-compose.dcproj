@@ -3,7 +3,7 @@
   <PropertyGroup Label="Globals">
     <ProjectVersion>2.1</ProjectVersion>
     <DockerTargetOS>Linux</DockerTargetOS>
-    <ProjectGuid>8d9f8828-6c51-44aa-b4b0-5cec9f1449a2</ProjectGuid>
+    <ProjectGuid>5410992d-72f3-4b91-9fa4-5599be82edd7</ProjectGuid>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}/swagger</DockerServiceUrl>
     <DockerServiceName>apiwithjwt</DockerServiceName>
